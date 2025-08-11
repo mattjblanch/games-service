@@ -6,6 +6,8 @@ create extension if not exists pgcrypto;
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   username text unique,
+  wins integer default 0,
+  losses integer default 0,
   created_at timestamptz default now()
 );
 
@@ -75,6 +77,9 @@ for select using (auth.uid() = id);
 
 create policy "profiles: insert own" on public.profiles
 for insert with check (auth.uid() = id);
+
+create policy "profiles: update all" on public.profiles
+for update using (true) with check (true);
 
 create policy "matches: read all" on public.matches
 for select using (true);
