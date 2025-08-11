@@ -65,18 +65,35 @@ export default function RoomShell({ roomId, role }: { roomId: string; role: 'X'|
     <div className="container py-4">
       <div className="mb-4 flex items-center justify-between text-sm opacity-70">
         <div>Room: {roomId} · You are {role}</div>
-        <button
-          className="underline"
-          onClick={() => {
-            if (leaveRef.current) {
-              void leaveRef.current()
-              leaveRef.current = null
-            }
-            window.location.href = '/'
-          }}
-        >
-          Leave match
-        </button>
+        <div className="flex gap-4">
+          <button
+            className="underline"
+            onClick={() => {
+              if (leaveRef.current) {
+                void leaveRef.current()
+                leaveRef.current = null
+              }
+              window.location.href = '/'
+            }}
+          >
+            Leave match
+          </button>
+          <button
+            className="underline"
+            onClick={async () => {
+              if (!confirm('Delete this room?')) return
+              const client = supabase()
+              await client.from('matches').delete().eq('id', roomId)
+              if (leaveRef.current) {
+                await leaveRef.current()
+                leaveRef.current = null
+              }
+              window.location.href = '/'
+            }}
+          >
+            Delete room
+          </button>
+        </div>
       </div>
       <TicTacToeBoard board={board} canMove={canMove} onMove={makeMove} />
     </div>

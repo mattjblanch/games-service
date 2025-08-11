@@ -87,6 +87,11 @@ for update using (
   status = 'waiting' or auth.uid() in (player_x, player_o, created_by)
 );
 
+create policy "matches: delete if participant or waiting" on public.matches
+for delete using (
+  status = 'waiting' or auth.uid() in (player_x, player_o, created_by)
+);
+
 create policy "moves: read all" on public.moves
 for select using (true);
 
