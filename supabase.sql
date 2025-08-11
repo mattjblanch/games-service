@@ -51,9 +51,9 @@ create table if not exists public.matches (
   player_x uuid references public.profiles(id),
   player_o uuid references public.profiles(id),
   status match_status not null default 'waiting',
-  current_turn text check (current_turn in ('X','O')) default 'X',
-  winner text check (winner in ('X','O','draw')),
-  snapshot text check (length(snapshot) = 9) default '.........',
+  current_turn text default 'X',
+  winner text,
+  snapshot text default '.........',
   created_at timestamptz default now()
 );
 

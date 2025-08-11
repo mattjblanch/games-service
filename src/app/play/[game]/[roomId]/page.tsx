@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import RoomShell from '@/components/RoomShell'
+import ChessRoom from '@/components/ChessRoom'
 import { supabase } from '@/lib/supabase'
 import { useParams } from 'next/navigation'
 
@@ -33,5 +34,9 @@ export default function RoomPage() {
   }, [params.roomId])
 
   if (loading || !role) return <div className="container py-6">Joining room…</div>
-  return <RoomShell roomId={params.roomId} role={role} />
+  return params.game === 'chess' ? (
+    <ChessRoom roomId={params.roomId} role={role === 'X' ? 'w' : 'b'} />
+  ) : (
+    <RoomShell roomId={params.roomId} role={role} />
+  )
 }
