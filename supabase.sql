@@ -9,6 +9,21 @@ create table if not exists public.profiles (
   created_at timestamptz default now()
 );
 
+-- Automatically create a profile entry for new users
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id)
+  values (new.id)
+  on conflict (id) do nothing;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
 -- Games metadata
 create table if not exists public.games (
   slug text primary key,
