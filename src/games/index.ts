@@ -1,3 +1,4 @@
 import { tttMeta } from './tictactoe/meta'
-export const games = [tttMeta]
+import { chessMeta } from './chess/meta'
+export const games = [tttMeta, chessMeta]
 export const gameBySlug = (slug: string) => games.find(g => g.slug === slug)
