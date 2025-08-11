@@ -79,6 +79,7 @@ export default function Home() {
                 user && (r.player_x === user.id || r.player_o === user.id)
               const isJoinable =
                 user && r.status === 'waiting' && !isParticipant
+              const isCreator = user && r.created_by === user.id
               return (
                 <div
                   key={r.id}
@@ -94,22 +95,39 @@ export default function Home() {
                         : 'In progress'}
                     </div>
                   </div>
-                  {user ? (
-                    isParticipant || isJoinable ? (
+                  <div className="flex items-center gap-2">
+                    {user ? (
+                      isParticipant || isJoinable ? (
+                        <button
+                          className="px-4 py-2 rounded-xl border"
+                          onClick={() => {
+                            window.location.href = `/play/${r.game_slug}/${r.id}`
+                          }}
+                        >
+                          {isParticipant ? 'Re-enter' : 'Join room'}
+                        </button>
+                      ) : (
+                        <span className="text-sm opacity-70">Full</span>
+                      )
+                    ) : (
+                      <span className="text-sm opacity-70">Login required</span>
+                    )}
+                    {isCreator && (
                       <button
-                        className="px-4 py-2 rounded-xl border"
-                        onClick={() => {
-                          window.location.href = `/play/${r.game_slug}/${r.id}`
+                        className="px-2 py-1 rounded-xl border text-sm"
+                        aria-label="Delete room"
+                        onClick={async () => {
+                          const ok = confirm('Delete this room?')
+                          if (!ok) return
+                          const client = supabase()
+                          await client.from('matches').delete().eq('id', r.id)
+                          setRooms((prev) => prev.filter((room) => room.id !== r.id))
                         }}
                       >
-                        {isParticipant ? 'Re-enter' : 'Join room'}
+                        ×
                       </button>
-                    ) : (
-                      <span className="text-sm opacity-70">Full</span>
-                    )
-                  ) : (
-                    <span className="text-sm opacity-70">Login required</span>
-                  )}
+                    )}
+                  </div>
                 </div>
               )
             })}
