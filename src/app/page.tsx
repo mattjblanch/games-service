@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { games, gameBySlug } from '@/games'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
+import { initialSnapshot as chessInitialSnapshot } from '@/games/chess/engine'
 
 export default function Home() {
   const [user, setUser] = useState<any>(null)
@@ -83,6 +84,9 @@ export default function Home() {
                       game_slug: g.slug,
                       created_by: profile.user!.id,
                       player_x: profile.user!.id,
+                      ...(g.slug === 'chess'
+                        ? { snapshot: chessInitialSnapshot(), current_turn: 'w' }
+                        : {}),
                     })
                     .select('id')
                     .single()

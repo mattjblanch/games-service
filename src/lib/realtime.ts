@@ -2,8 +2,22 @@ import { supabase } from './supabase'
 
 export type GameEvent =
   | { type: 'join'; userId: string | undefined }
-  | { type: 'move'; cell: number; symbol: 'X'|'O' }
-  | { type: 'state'; snapshot: string; currentTurn: 'X'|'O'; winner?: 'X'|'O'|'draw' }
+  // tic tac toe events
+  | { type: 'move'; cell: number; symbol: 'X' | 'O' }
+  | {
+      type: 'state'
+      snapshot: string
+      currentTurn: 'X' | 'O'
+      winner?: 'X' | 'O' | 'draw'
+    }
+  // chess events
+  | { type: 'move'; from: string; to: string; promotion?: string }
+  | {
+      type: 'state'
+      snapshot: string
+      currentTurn: 'w' | 'b'
+      winner?: 'w' | 'b' | 'draw'
+    }
 
 export const joinRoom = async (roomId: string, onEvent: (e: GameEvent)=>void) => {
   const client = supabase()

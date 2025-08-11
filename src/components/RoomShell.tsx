@@ -28,12 +28,12 @@ export default function RoomShell({ roomId, role }: { roomId: string; role: 'X'|
   useEffect(() => {
     ;(async () => {
       const { send, leave } = await joinRoom(roomId, (e: GameEvent) => {
-        if (e.type === 'state') {
+        if (e.type === 'state' && 'currentTurn' in e && (e.currentTurn === 'X' || e.currentTurn === 'O')) {
           setBoard(fromSnapshot(e.snapshot))
           setTurn(e.currentTurn)
           setResult(e.winner ?? null)
         }
-        if (e.type === 'move') {
+        if (e.type === 'move' && 'cell' in e) {
           setBoard((b) => {
             const nb = applyMove(b, { cell: e.cell, symbol: e.symbol })
             const w = winner(nb)
