@@ -1,22 +1,41 @@
 'use client'
 import Link from 'next/link'
-import { games } from '@/games'
+import { games, gameBySlug } from '@/games'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 
 export default function Home() {
   const [user, setUser] = useState<any>(null)
-  useEffect(() => { supabase().auth.getUser().then(({ data }) => setUser(data.user)) }, [])
+  const [rooms, setRooms] = useState<any[]>([])
+
+  useEffect(() => {
+    supabase().auth.getUser().then(({ data }) => setUser(data.user))
+  }, [])
+
+  useEffect(() => {
+    const client = supabase()
+    client
+      .from('matches')
+      .select('*')
+      .neq('status', 'finished')
+      .then(({ data }) => setRooms(data || []))
+  }, [])
 
   return (
     <div className="container py-6 flex flex-col gap-4">
       {!user && (
-        <Link href="/login" className="underline">Log in to play</Link>
+        <Link href="/login" className="underline">
+          Log in to play
+        </Link>
       )}
+
       <h2 className="text-lg font-semibold">Choose a game</h2>
       <div className="grid grid-cols-1 gap-3">
-        {games.map(g => (
-          <div key={g.slug} className="rounded-2xl border p-4 flex items-center justify-between">
+        {games.map((g) => (
+          <div
+            key={g.slug}
+            className="rounded-2xl border p-4 flex items-center justify-between"
+          >
             <div>
               <div className="font-medium">{g.name}</div>
               <div className="text-sm opacity-70">{g.slug}</div>
@@ -27,9 +46,15 @@ export default function Home() {
                 onClick={async () => {
                   const client = supabase()
                   const { data: profile } = await client.auth.getUser()
-                  const { data, error } = await client.from('matches')
-                    .insert({ game_slug: g.slug, created_by: profile.user!.id, player_x: profile.user!.id })
-                    .select('id').single()
+                  const { data, error } = await client
+                    .from('matches')
+                    .insert({
+                      game_slug: g.slug,
+                      created_by: profile.user!.id,
+                      player_x: profile.user!.id,
+                    })
+                    .select('id')
+                    .single()
                   if (!error && data) {
                     window.location.href = `/play/${g.slug}/${data.id}`
                   }
@@ -43,6 +68,54 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+      {rooms.length > 0 && (
+        <>
+          <h2 className="text-lg font-semibold mt-4">Running rooms</h2>
+          <div className="grid grid-cols-1 gap-3">
+            {rooms.map((r) => {
+              const g = gameBySlug(r.game_slug)
+              const isParticipant =
+                user && (r.player_x === user.id || r.player_o === user.id)
+              const isJoinable =
+                user && r.status === 'waiting' && !isParticipant
+              return (
+                <div
+                  key={r.id}
+                  className="rounded-2xl border p-4 flex items-center justify-between"
+                >
+                  <div>
+                    <div className="font-medium">
+                      {g?.name ?? r.game_slug}
+                    </div>
+                    <div className="text-sm opacity-70">
+                      {r.status === 'waiting'
+                        ? 'Waiting for opponent'
+                        : 'In progress'}
+                    </div>
+                  </div>
+                  {user ? (
+                    isParticipant || isJoinable ? (
+                      <button
+                        className="px-4 py-2 rounded-xl border"
+                        onClick={() => {
+                          window.location.href = `/play/${r.game_slug}/${r.id}`
+                        }}
+                      >
+                        {isParticipant ? 'Re-enter' : 'Join room'}
+                      </button>
+                    ) : (
+                      <span className="text-sm opacity-70">Full</span>
+                    )
+                  ) : (
+                    <span className="text-sm opacity-70">Login required</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
     </div>
   )
 }
