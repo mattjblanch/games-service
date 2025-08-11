@@ -2,6 +2,7 @@ import './globals.css'
 import type { ReactNode } from 'react'
 import OnlineUsers from '@/components/OnlineUsers'
 import UserEmail from '@/components/UserEmail'
+import LogoutButton from '@/components/LogoutButton'
 
 export const metadata = {
   title: 'Game Service',
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-4">
             {/* show user email and number of users online */}
             <UserEmail />
+            <LogoutButton />
             <OnlineUsers />
           </div>
         </header>
