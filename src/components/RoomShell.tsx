@@ -11,6 +11,7 @@ export default function RoomShell({ roomId, role }: { roomId: string; role: 'X'|
   const [result, setResult] = useState<'X'|'O'|'draw'|null>(null)
   const sendRef = useRef<null | ((e: GameEvent) => Promise<unknown>)>(null)
   const leaveRef = useRef<null | (() => Promise<unknown>)>(null)
+  const [players, setPlayers] = useState<{ x: string | null; o: string | null }>({ x: null, o: null })
 
   useEffect(() => {
     ;(async () => {
@@ -36,6 +37,16 @@ export default function RoomShell({ roomId, role }: { roomId: string; role: 'X'|
     return () => { if (leaveRef.current) void leaveRef.current() }
   }, [roomId])
 
+  useEffect(() => {
+    const client = supabase()
+    client
+      .from('matches')
+      .select('player_x, player_o')
+      .eq('id', roomId)
+      .single()
+      .then(({ data }) => setPlayers({ x: data?.player_x ?? null, o: data?.player_o ?? null }))
+  }, [roomId])
+
   const canMove = result == null && turn === role
 
   const makeMove = async (cell: number) => {
@@ -59,6 +70,18 @@ export default function RoomShell({ roomId, role }: { roomId: string; role: 'X'|
       winner: w ?? null
     }).eq('id', roomId)
     await client.from('moves').insert({ match_id: roomId, cell, symbol: role })
+
+    if (w) {
+      if (players.x && players.o && w !== 'draw') {
+        const winnerId = w === 'X' ? players.x : players.o
+        const loserId = w === 'X' ? players.o : players.x
+        const { data: winP } = await client.from('profiles').select('wins').eq('id', winnerId).single()
+        await client.from('profiles').update({ wins: (winP?.wins ?? 0) + 1 }).eq('id', winnerId)
+        const { data: loseP } = await client.from('profiles').select('losses').eq('id', loserId).single()
+        await client.from('profiles').update({ losses: (loseP?.losses ?? 0) + 1 }).eq('id', loserId)
+      }
+      await client.from('matches').delete().eq('id', roomId)
+    }
   }
 
   return (
