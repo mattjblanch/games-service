@@ -33,7 +33,7 @@ create table if not exists public.games (
 );
 
 insert into public.games (slug, name)
-values ('tic-tac-toe', 'Tic-Tac-Toe')
+values ('tic-tac-toe', 'Tic-Tac-Toe'), ('chess', 'Chess')
 on conflict (slug) do nothing;
 
 -- Matches represent a room
