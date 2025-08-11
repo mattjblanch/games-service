@@ -9,8 +9,8 @@ export default function RoomShell({ roomId, role }: { roomId: string; role: 'X'|
   const [board, setBoard] = useState<Board>(emptyBoard())
   const [turn, setTurn] = useState<'X'|'O'>('X')
   const [result, setResult] = useState<'X'|'O'|'draw'|null>(null)
-  const sendRef = useRef<null | ((e: GameEvent) => boolean)>(null)
-  const leaveRef = useRef<null | (() => boolean)>(null)
+  const sendRef = useRef<null | ((e: GameEvent) => Promise<unknown>)>(null)
+  const leaveRef = useRef<null | (() => Promise<unknown>)>(null)
 
   useEffect(() => {
     ;(async () => {
@@ -30,10 +30,10 @@ export default function RoomShell({ roomId, role }: { roomId: string; role: 'X'|
           })
         }
       })
-      sendRef.current = (ev) => send(ev)
-      leaveRef.current = () => leave()
+      sendRef.current = send
+      leaveRef.current = leave
     })()
-    return () => { if (leaveRef.current) leaveRef.current() }
+    return () => { if (leaveRef.current) void leaveRef.current() }
   }, [roomId])
 
   const canMove = result == null && turn === role
@@ -44,7 +44,7 @@ export default function RoomShell({ roomId, role }: { roomId: string; role: 'X'|
     const w = winner(nb)
 
     // broadcast to peers
-    if (sendRef.current) sendRef.current({ type: 'move', cell, symbol: role })
+    if (sendRef.current) void sendRef.current({ type: 'move', cell, symbol: role })
 
     // optimistic update
     setBoard(nb)
