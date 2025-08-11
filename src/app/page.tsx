@@ -120,7 +120,17 @@ export default function Home() {
                           const ok = confirm('Delete this room?')
                           if (!ok) return
                           const client = supabase()
-                          await client.from('matches').delete().eq('id', r.id)
+                          // attempt to remove room; if deletion fails, mark finished
+                          const { error } = await client
+                            .from('matches')
+                            .delete()
+                            .eq('id', r.id)
+                          if (error) {
+                            await client
+                              .from('matches')
+                              .update({ status: 'finished' })
+                              .eq('id', r.id)
+                          }
                           setRooms((prev) => prev.filter((room) => room.id !== r.id))
                         }}
                       >
