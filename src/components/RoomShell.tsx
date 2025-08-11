@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { joinRoom, type GameEvent } from '@/lib/realtime'
 import { fromSnapshot, toSnapshot, emptyBoard, applyMove, winner, nextTurn, type Board } from '@/games/tictactoe/engine'
 import { TicTacToeBoard } from '@/games/tictactoe/ui'
@@ -12,6 +12,18 @@ export default function RoomShell({ roomId, role }: { roomId: string; role: 'X'|
   const sendRef = useRef<null | ((e: GameEvent) => Promise<unknown>)>(null)
   const leaveRef = useRef<null | (() => Promise<unknown>)>(null)
   const [players, setPlayers] = useState<{ x: string | null; o: string | null }>({ x: null, o: null })
+
+  useEffect(() => {
+    if (!result) return
+    const t = setTimeout(() => {
+      if (leaveRef.current) {
+        void leaveRef.current()
+        leaveRef.current = null
+      }
+      window.location.href = '/'
+    }, 5000)
+    return () => clearTimeout(t)
+  }, [result])
 
   useEffect(() => {
     ;(async () => {
@@ -119,6 +131,13 @@ export default function RoomShell({ roomId, role }: { roomId: string; role: 'X'|
         </div>
       </div>
       <TicTacToeBoard board={board} canMove={canMove} onMove={makeMove} />
+      {result && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60">
+          <div className="rounded-2xl bg-white p-6 text-xl text-center">
+            {result === 'draw' ? 'Draw!' : `${result} wins!`}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

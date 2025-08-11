@@ -21,6 +21,37 @@ export default function Home() {
       .then(({ data }) => setRooms(data || []))
   }, [])
 
+  useEffect(() => {
+    const client = supabase()
+    const channel = client
+      .channel('public:matches')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, (payload) => {
+        setRooms((prev) => {
+          if (payload.eventType === 'INSERT') {
+            const inserted: any = (payload as any).new
+            if (inserted.status === 'finished') return prev
+            return [...prev, inserted]
+          }
+          if (payload.eventType === 'UPDATE') {
+            const updated: any = (payload as any).new
+            if (updated.status === 'finished') {
+              return prev.filter((r) => r.id !== updated.id)
+            }
+            return prev.map((r) => (r.id === updated.id ? updated : r))
+          }
+          if (payload.eventType === 'DELETE') {
+            const removed: any = (payload as any).old
+            return prev.filter((r) => r.id !== removed.id)
+          }
+          return prev
+        })
+      })
+      .subscribe()
+    return () => {
+      void client.removeChannel(channel)
+    }
+  }, [])
+
   return (
     <div className="container py-6 flex flex-col gap-4">
       {!user && (
